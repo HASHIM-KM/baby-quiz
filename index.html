@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Baby Quiz</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(180deg, #f0f8ff 0%, #fff7e6 100%);
+        min-height: 100vh;
+    }
+
+    .quiz-shell {
+        max-width: 1100px;
+    }
+
+    .quiz-card {
+        border: 0;
+        border-radius: 24px;
+        box-shadow: 0 18px 40px rgba(48, 84, 122, 0.12);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(6px);
+    }
+
+    h1 {
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 700;
+    }
+
+    .category {
+        font-size: clamp(1.1rem, 2vw, 1.5rem);
+        color: #555;
+    }
+
+    .choice-card {
+        background: #fff;
+        padding: 1rem;
+        cursor: pointer;
+        border: 4px solid transparent;
+        border-radius: 20px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        box-shadow: 0 10px 24px rgba(33, 59, 89, 0.08);
+        height: 100%;
+        text-align: center;
+    }
+
+    .choice-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 28px rgba(33, 59, 89, 0.14);
+    }
+
+    .choice-card img {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: contain;
+        background: #fff;
+        border-radius: 16px;
+    }
+
+    .label {
+        margin-top: 0.9rem;
+        font-size: clamp(1rem, 2vw, 1.25rem);
+        font-weight: bold;
+        color: #28435f;
+    }
+
+    .correct {
+        border-color: green;
+    }
+
+    .wrong {
+        border-color: red;
+    }
+
+    #playBtn {
+        font-size: 1rem;
+        padding: 0.75rem 1.5rem;
+        border-radius: 999px;
+    }
+
+    @media (max-width: 575.98px) {
+        .choice-card {
+            padding: 0.85rem;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container py-4 py-md-5">
+    <div class="quiz-shell mx-auto">
+        <div class="quiz-card text-center p-4 p-md-5">
+            <h1 class="mb-3">Tap the correct image</h1>
+            <div class="category mb-4" id="categoryName"></div>
+
+            <button id="playBtn" class="btn btn-primary btn-lg shadow-sm mb-4 mb-md-5">Play Again</button>
+
+            <div class="row g-3 g-md-4 images">
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="choice-card item">
+                        <img id="img1" alt="Quiz choice 1">
+                        <div class="label" id="label1"></div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="choice-card item">
+                        <img id="img2" alt="Quiz choice 2">
+                        <div class="label" id="label2"></div>
+                    </div>
+                </div>
+                <div class="col-12 col-sm-6 col-lg-4 mx-sm-auto mx-lg-0">
+                    <div class="choice-card item">
+                        <img id="img3" alt="Quiz choice 3">
+                        <div class="label" id="label3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+const data = {
+    Animals: [
+        { name: "Dog", src: "images/dog.jpg" },
+        { name: "Cat", src: "images/cat.jpg" },
+        { name: "Cow", src: "images/cow.jpg" },
+        { name: "Lion", src: "images/lion.jpg" },
+        { name: "Elephant", src: "images/elephant.jpg" }
+    ],
+    Fruits: [
+        { name: "Apple", src: "images/apple.jpg" },
+        { name: "Banana", src: "images/banana.jpg" },
+        { name: "Orange", src: "images/orange.jpg" },
+        { name: "Mango", src: "images/mango.jpg" },
+        { name: "Grapes", src: "images/grapes.jpg" }
+    ],
+    Vehicles: [
+        { name: "Car", src: "images/car.jpg" },
+        { name: "Bus", src: "images/bus.jpg" },
+        { name: "Bike", src: "images/bike.jpg" },
+        { name: "Train", src: "images/train.jpg" },
+        { name: "Truck", src: "images/truck.jpg" }
+    ]
+};
+
+let currentCorrect = "";
+
+function speak(text) {
+    const speech = new SpeechSynthesisUtterance(text);
+    speech.rate = 0.7;
+    speech.pitch = 1.2;
+    speech.lang = "en-US";
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(speech);
+}
+
+function getRandomCategory() {
+    const keys = Object.keys(data);
+    return keys[Math.floor(Math.random() * keys.length)];
+}
+
+function loadGame() {
+    $(".choice-card").removeClass("correct wrong");
+
+    let category = getRandomCategory();
+    let items = [...data[category]];
+
+    $("#categoryName").text("Category: " + category);
+
+    let shuffled = items.sort(() => 0.5 - Math.random()).slice(0, 3);
+
+    $("#img1").attr("src", shuffled[0].src).data("name", shuffled[0].name);
+    $("#label1").text(shuffled[0].name);
+
+    $("#img2").attr("src", shuffled[1].src).data("name", shuffled[1].name);
+    $("#label2").text(shuffled[1].name);
+
+    $("#img3").attr("src", shuffled[2].src).data("name", shuffled[2].name);
+    $("#label3").text(shuffled[2].name);
+
+    currentCorrect = shuffled[Math.floor(Math.random() * 3)].name;
+    speak("Find " + currentCorrect);
+}
+
+$("#playBtn").off("click").on("click", function () {
+    speak("Find " + currentCorrect);
+});
+
+$(".images img").off("click").on("click", function () {
+    let selected = $(this).data("name");
+    let choiceCard = $(this).closest(".choice-card");
+
+    if (selected === currentCorrect) {
+        speak("Great job!");
+        choiceCard.addClass("correct");
+        loadGame();
+    } else {
+        choiceCard.addClass("wrong");
+        speak("Try again");
+    }
+});
+
+loadGame();
+
+</script>
+
+</body>
+</html>
